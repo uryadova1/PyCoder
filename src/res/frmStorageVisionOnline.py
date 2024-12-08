@@ -7,6 +7,8 @@
 #
 # WARNING! All changes made in this file will be lost!
 
+from __future__ import absolute_import
+from builtins import object
 from PyQt4 import QtCore, QtGui
 
 class Ui_frmStorageVisionOnline(object):
@@ -173,4 +175,4 @@ class Ui_frmStorageVisionOnline(object):
         self.label_2.setText(QtGui.QApplication.translate("frmStorageVisionOnline", "[d:h:m]", None, QtGui.QApplication.UnicodeUTF8))
         self.pushButtonRecord.setText(QtGui.QApplication.translate("frmStorageVisionOnline", "Record", None, QtGui.QApplication.UnicodeUTF8))
 
-import resources_rc
+from . import resources_rc

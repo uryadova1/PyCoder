@@ -28,7 +28,13 @@ along with PyCorder. If not, see <http://www.gnu.org/licenses/>.
 @author: Norbert Hauser
 @version: 1.0
 '''
+from __future__ import division
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from past.utils import old_div
+from builtins import object
 from modbase import *
 from socket import *
 from select import *
@@ -36,7 +42,7 @@ from struct import *
 from binascii import *
 from ctypes import *
 
-class RDAMessageType:
+class RDAMessageType(object):
     ''' RDA Message Types
     '''
     START = 1           #: Setup / Start info
@@ -283,7 +289,7 @@ class RDA_Server(ModuleBase):
         '''
         if type == RDAMessageType.START:
             channels = len(data.channel_properties)
-            samplingInterval = 1.0e6 / data.sample_rate     # sampling interval in us
+            samplingInterval = old_div(1.0e6, data.sample_rate)     # sampling interval in us
             
             # create resolution byte array (we have a resolution of 1uV for all channels)
             res = [1.0] * channels
@@ -293,7 +299,7 @@ class RDA_Server(ModuleBase):
             # use ansi code page 1252
             chn =[]
             for channel in data.channel_properties:
-                chn.append(unicode(channel.name).encode("cp1252"))
+                chn.append(str(channel.name).encode("cp1252"))
             chnbyte = "\0".join(chn) + "\0"    
             
             # create message header
@@ -330,8 +336,8 @@ class RDA_Server(ModuleBase):
                 mtype = marker.type.encode("utf-8") + "\0"
                 msize = hdr_marker.size + len(mdescription) + len(mtype)
                 mpos = marker.position - data.sample_channel[0][0] # marker position must be relative to this data block
-                mpos = long(np.int64(mpos))
-                mkr = bytearray(hdr_marker.pack(msize, mpos, long(marker.points), marker.channel))
+                mpos = int(np.int64(mpos))
+                mkr = bytearray(hdr_marker.pack(msize, mpos, int(marker.points), marker.channel))
                 mkr.extend(mtype)
                 mkr.extend(mdescription)
                 mkrbyte.extend(mkr)
@@ -363,7 +369,7 @@ class RDA_Server(ModuleBase):
             nChannels = 0
             for idx, ch in enumerate(self.params.channel_properties):
                 fXPosition = (idx % 10) * 0.05 + 0.5
-                fYPosition = (idx / 10) * 0.05 + 0.05
+                fYPosition = (old_div(idx, 10)) * 0.05 + 0.05
                 valD = None
                 valR = None
                 # impedance value for data electrode available?
@@ -379,14 +385,14 @@ class RDA_Server(ModuleBase):
                         channelName =  ch.name + "+"
                     else:
                         channelName = ch.name
-                    suElectrodeName = unicode(channelName).encode("utf-16le") + "\0\0"
+                    suElectrodeName = str(channelName).encode("utf-16le") + "\0\0"
                     imp = self._packImpedance(nChannels, valD, suElectrodeName)
                     impbyte.extend(imp)
                     nChannels += 1
                         
                 if valR != None:
                     channelName = ch.name + "-"
-                    suElectrodeName = unicode(channelName).encode("utf-16le") + "\0\0"
+                    suElectrodeName = str(channelName).encode("utf-16le") + "\0\0"
                     imp = self._packImpedance(nChannels, valR, suElectrodeName)
                     impbyte.extend(imp)
                     nChannels += 1
@@ -398,7 +404,7 @@ class RDA_Server(ModuleBase):
 
             if gndImpedance != None:
                 channelName = "GND"
-                suElectrodeName = unicode(channelName).encode("utf-16le") + "\0\0"
+                suElectrodeName = str(channelName).encode("utf-16le") + "\0\0"
                 imp = self._packImpedance(nChannels, gndImpedance, suElectrodeName)
                 impbyte.extend(imp)
                 nChannels += 1
@@ -421,7 +427,7 @@ class RDA_Server(ModuleBase):
         
         elif type == RDAMessageType.INFO:
             channels = len(data.channel_properties)
-            samplingInterval = 1.0e6 / data.sample_rate     # sampling interval in us
+            samplingInterval = old_div(1.0e6, data.sample_rate)     # sampling interval in us
             
             # recorder version
             version = 2.0
@@ -433,7 +439,7 @@ class RDA_Server(ModuleBase):
             # create channel names byte array (null terminated strings)
             chn =[]
             for channel in data.channel_properties:
-                chn.append(unicode(channel.name))
+                chn.append(str(channel.name))
             chnbyte = "\0".join(chn) + "\0"    
             chnwbyte = chnbyte.encode("utf-16-le")
             
@@ -476,18 +482,18 @@ class RDA_Server(ModuleBase):
         if impedance >= CHAMP_IMP_INVALID:
             nImpedance = -1
         else:
-            nImpedance = (impedance + 500) / 1000
+            nImpedance = old_div((impedance + 500), 1000)
         return nImpedance
         
     def _packImpedance(self, number, value, name):
         fXPosition = (number % 10) * 0.05 + 0.5
-        fYPosition = (number / 10) * 0.05 + 0.05
+        fYPosition = (old_div(number, 10)) * 0.05 + 0.05
         hdr_imp = Struct("<ffi") # impedance: fXPosition, fYPosition, nImpedance + suElectrodeName
         imp = bytearray(hdr_imp.pack(fXPosition, fYPosition, value))
         imp.extend(name)
         return imp
         
-class ClientConnection():
+class ClientConnection(object):
     ''' Object holding a connected client
     '''
     def __init__(self, clientsock, addr):
@@ -531,7 +537,7 @@ class ClientConnection():
                     if len(wr) > 0:
                         sent = self.sock.send(data[totalsent:])
                         if sent == 0:
-                            raise RuntimeError, "socket connection broken"
+                            raise RuntimeError("socket connection broken")
                         totalsent = totalsent + sent
                 
             except Queue.Empty:

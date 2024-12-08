@@ -31,13 +31,16 @@ along with PyCorder. If not, see <http://www.gnu.org/licenses/>.
 
 B{Revision:} $LastChangedRevision: 214 $
 '''
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
 from PyQt4 import Qt
 from socket import *
 from select import *
 import threading
 import time
 import sys
-import Queue
+import queue
 
 from modbase import ModuleEvent
 from modbase import EventType
@@ -190,7 +193,7 @@ class RemoteClientConnection(Qt.QObject):
         self.ParentServer = parent_server
         self.sock = clientsock
         self.addr = addr
-        self.transmit_queue = Queue.Queue(20)
+        self.transmit_queue = queue.Queue(20)
         # start receive thread
         self.connected = True
         self.clientthread = threading.Thread(target=self._receive_thread)
@@ -218,7 +221,7 @@ class RemoteClientConnection(Qt.QObject):
         encodings = [ "utf-8", "ascii", "cp1252", "utf_16", "utf_16_be", "utf_16_le"]
         for enc in encodings:
             try:
-                ucode = unicode(data, enc)
+                ucode = str(data, enc)
                 return ucode
             except:
                 if enc == encodings[-1]:
@@ -262,9 +265,9 @@ class RemoteClientConnection(Qt.QObject):
                             if len(wr) > 0:
                                 sent = self.sock.send(data[totalsent:])
                                 if sent == 0:
-                                    raise RuntimeError, "socket connection broken"
+                                    raise RuntimeError("socket connection broken")
                                 totalsent = totalsent + sent
-                    except Queue.Empty:
+                    except queue.Empty:
                         time.sleep(0.002)        # suspend thread (default = 2ms)
                             
             except Exception as e:

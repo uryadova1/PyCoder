@@ -33,6 +33,8 @@ B{Revision:} $LastChangedRevision: 199 $
 '''
 
 # add ourself package path to system path
+from builtins import str
+from future.utils import raise_
 import os, sys 
 res_path = os.path.abspath('devices') 
 sys.path.append(res_path) 
@@ -85,7 +87,7 @@ class DeviceContainer(Qt.QObject):
                     {'variable':'description', 'header':'Devices connected', 'edit':False, 'editor':'default'},
                    ]
         cblist = {}
-        self.CfgWidget.availabletable.setData(self.availableDevices.values(), acolumns, cblist)
+        self.CfgWidget.availabletable.setData(list(self.availableDevices.values()), acolumns, cblist)
         self.CfgWidget.instantiatedtable.setData(self.instantiatedDevices, ccolumns, cblist)
         self.connect(self.CfgWidget, Qt.SIGNAL("insertDevice(int)"), self._insertDevice)
         self.connect(self.CfgWidget, Qt.SIGNAL("removeDevice(int)"), self._removeDevice)
@@ -95,7 +97,7 @@ class DeviceContainer(Qt.QObject):
     def _insertDevice(self, idx):
         ''' Signal from configuration widget
         '''
-        dev = self.availableDevices.values()
+        dev = list(self.availableDevices.values())
         if idx >= 0 and idx < len(dev):
             new_device = dev[idx]()
             if new_device.configure_device():
@@ -215,13 +217,13 @@ class DeviceContainer(Qt.QObject):
         # check version, has to be lower or equal than current version
         version = xml.InputDevices.get("version")
         if (version == None) or (int(version) > self.xmlVersion):
-            raise Exception, "Input Device Configuration: wrong version > %d"%(self.xmlVersion)
+            raise_(Exception, "Input Device Configuration: wrong version > %d"%(self.xmlVersion))
         version = int(version)
         
         # get and instantiate the input devices
         for device in xml.InputDevices.iterchildren():
             # instantiate device
-            if self.availableDevices.has_key(device.classname.pyval):
+            if device.classname.pyval in self.availableDevices:
                 d = self.availableDevices[device.classname.pyval]() 
                 d.setXML(device)
                 # check for already connected input channels
@@ -231,7 +233,7 @@ class DeviceContainer(Qt.QObject):
                 if not overlapping:
                     self.instantiatedDevices.append(d)
                 else:
-                    raise Exception, "Can't connect %s: "%(d.description)+"Required input channels are already in use by other devices"
+                    raise_(Exception, "Can't connect %s: "%(d.description)+"Required input channels are already in use by other devices")
 
 
 

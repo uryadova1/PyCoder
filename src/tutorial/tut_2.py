@@ -31,7 +31,10 @@ along with PyCorder. If not, see <http://www.gnu.org/licenses/>.
 
 B{Revision:} $LastChangedRevision: 62 $
 '''
+from __future__ import print_function
 
+from builtins import map
+from builtins import range
 from modbase import *
 
 class TUT_2(ModuleBase):
@@ -66,16 +69,16 @@ class TUT_2(ModuleBase):
         
         # select channels with "_x2" in channel name, these channels will be multiplied by 2
         mask = lambda x: ("_x2" in x.name) # selection function
-        mask_ref = np.array(map(mask, self.params.channel_properties)) # create an boolean array with results of the mask function
+        mask_ref = np.array(list(map(mask, self.params.channel_properties))) # create an boolean array with results of the mask function
         self.mask_index = np.nonzero(mask_ref) # create an array of TRUE indices
-        print self.mask_index
+        print(self.mask_index)
         
         # search channels with "_loop" in channel name, 
         # all channels will be processed within a for-loop
         mask = lambda x: ("_loop" in x.name) # selection function
-        mask_ref = np.array(map(mask, self.params.channel_properties)) # create an boolean array with results of the mask function
+        mask_ref = np.array(list(map(mask, self.params.channel_properties))) # create an boolean array with results of the mask function
         self.loop = (np.nonzero(mask_ref)[0].size > 0) # use for loop if any channel name contains _loop
-        print self.loop
+        print(self.loop)
         
         return self.params # don't forget to pass the configuration down to the next module
 

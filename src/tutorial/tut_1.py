@@ -31,7 +31,11 @@ along with PyCorder. If not, see <http://www.gnu.org/licenses/>.
 
 B{Revision:} $LastChangedRevision: 62 $
 '''
+from __future__ import division
+from __future__ import print_function
 
+from builtins import str
+from past.utils import old_div
 from modbase import *
 
 class TUT_1(ModuleBase):
@@ -75,13 +79,13 @@ class TUT_1(ModuleBase):
         @return: EEG_DataBlock object
         '''
         # print the channel configuration to the Python console 
-        print "%s, process_update()"%(self._object_name) # just to see where we are
-        print " Number of channels: %d, Sample Rate = %d [Hz]"%(len(params.channel_properties), params.sample_rate)
-        print " Channel names:"
+        print("%s, process_update()"%(self._object_name)) # just to see where we are
+        print(" Number of channels: %d, Sample Rate = %d [Hz]"%(len(params.channel_properties), params.sample_rate))
+        print(" Channel names:")
         names = "  "
         for channel in params.channel_properties:
             names += channel.name + ", "
-        print names
+        print(names)
 
         # modify channel properties
         self._modify_properties(params)
@@ -124,7 +128,7 @@ class TUT_1(ModuleBase):
         elif event.type == EventType.STATUS:
             eventinfo += "STATUS %s, %s"%(event.info, str(event.status_field))
 
-        print eventinfo
+        print(eventinfo)
 
         
     def process_input(self, datablock):
@@ -153,7 +157,7 @@ class TUT_1(ModuleBase):
         # raise a divide by zero exception after 10000 received samples, 
         # just to see what happens ;-)
         if self.data.sample_counter > 10000:
-            a = 100/0
+            a = old_div(100,0)
     
    
     def process_output(self):

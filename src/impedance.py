@@ -31,7 +31,12 @@ along with PyCorder. If not, see <http://www.gnu.org/licenses/>.
 
 B{Revision:} $LastChangedRevision: 198 $
 '''
+from __future__ import division
+from __future__ import print_function
 
+from builtins import str
+from builtins import range
+from past.utils import old_div
 from PyQt4 import Qwt5 as Qwt
 from modbase import *
 from res import frmImpedanceDisplay
@@ -208,7 +213,7 @@ class DlgImpedance(Qt.QDialog, frmImpedanceDisplay.Ui_frmImpedanceDisplay):
         ''' Constructor
         @param module: parent module
         '''
-        apply(Qt.QDialog.__init__, (self,) + args)
+        Qt.QDialog.__init__(*(self,) + args)
         self.setupUi(self)
         self.module = module
         self.params = None  # last received parameter block
@@ -227,15 +232,15 @@ class DlgImpedance(Qt.QDialog, frmImpedanceDisplay.Ui_frmImpedanceDisplay):
         self.tableWidgetValues.setSpan(rc,0,1,cc)
         # row headers
         rheader = Qt.QStringList()
-        for r in xrange(rc):
+        for r in range(rc):
             rheader.append("%d - %d"%(r*cc+1, r*cc+cc))
         rheader.append("GND")
         self.tableWidgetValues.setVerticalHeaderLabels(rheader)
         # create cell items
         fnt = Qt.QFont()
         fnt.setPointSize(8)
-        for r in xrange(rc):
-            for c in xrange(cc):
+        for r in range(rc):
+            for c in range(cc):
                 item = Qt.QTableWidgetItem()
                 item.setTextAlignment(Qt.Qt.AlignCenter)
                 item.setFont(fnt)
@@ -356,8 +361,8 @@ class DlgImpedance(Qt.QDialog, frmImpedanceDisplay.Ui_frmImpedanceDisplay):
         cc = self.tableWidgetValues.columnCount()
         rc = self.tableWidgetValues.rowCount() - 1
         # reset items
-        for row in xrange(rc):
-            for col in xrange(cc):
+        for row in range(rc):
+            for col in range(cc):
                 item = self.tableWidgetValues.item(row, col)
                 item.setText("")
                 item.label = ""
@@ -365,7 +370,7 @@ class DlgImpedance(Qt.QDialog, frmImpedanceDisplay.Ui_frmImpedanceDisplay):
         # set channel labels
         for idx, ch in enumerate(self.params.channel_properties):
             if (ch.enable or ch.isReference) and (ch.input > 0) and (ch.input <= rc*cc) and (ch.inputgroup == ChannelGroup.EEG):
-                row = (ch.input-1) / cc
+                row = old_div((ch.input-1), cc)
                 col = (ch.input-1) % cc
                 # channel has a reference impedance value?
                 if self.params.eeg_channels[idx, ImpedanceIndex.REF] == 1:
@@ -374,7 +379,7 @@ class DlgImpedance(Qt.QDialog, frmImpedanceDisplay.Ui_frmImpedanceDisplay):
                     self._setLabelText(row, col, name)
                     # put the reference values at the following table item, if possible
                     name =  ch.name + " " + ImpedanceIndex.Name[ImpedanceIndex.REF]
-                    row = (ch.input) / cc
+                    row = old_div((ch.input), cc)
                     col = (ch.input) % cc
                     self._setLabelText(row, col, name)
                 else:
@@ -407,7 +412,7 @@ class DlgImpedance(Qt.QDialog, frmImpedanceDisplay.Ui_frmImpedanceDisplay):
 
         # check for an outdated impedance structure
         if len(data.impedances) > 0 or len(data.channel_properties) != len(self.params.channel_properties):
-            print "outdated impedance structure received!"
+            print("outdated impedance structure received!")
             return
         
         cc = self.tableWidgetValues.columnCount()
@@ -418,7 +423,7 @@ class DlgImpedance(Qt.QDialog, frmImpedanceDisplay.Ui_frmImpedanceDisplay):
         for idx, ch in enumerate(data.channel_properties):
             if (ch.enable or ch.isReference) and (ch.input > 0) and (ch.input <= rc*cc) and (ch.inputgroup == ChannelGroup.EEG):
                 impCount += 1
-                row = (ch.input-1) / cc
+                row = old_div((ch.input-1), cc)
                 col = (ch.input-1) % cc
                 item = self.tableWidgetValues.item(row, col)
 
@@ -434,7 +439,7 @@ class DlgImpedance(Qt.QDialog, frmImpedanceDisplay.Ui_frmImpedanceDisplay):
 
                 # channel has a reference impedance value?
                 if self.params.eeg_channels[idx, ImpedanceIndex.REF] == 1:
-                    row = (ch.input) / cc
+                    row = old_div((ch.input), cc)
                     col = (ch.input) % cc
                     item = self.tableWidgetValues.item(row, col)
                     # reference channel value

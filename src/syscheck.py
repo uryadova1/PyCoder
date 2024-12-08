@@ -31,7 +31,14 @@ along with PyCorder. If not, see <http://www.gnu.org/licenses/>.
 
 B{Revision:} $LastChangedRevision: 62 $
 '''
+from __future__ import division
+from __future__ import print_function
 
+from builtins import input
+from builtins import str
+from builtins import map
+from builtins import range
+from past.utils import old_div
 import os, sys, traceback, platform
 import datetime
 from loadlibs import *
@@ -57,7 +64,7 @@ def logIt(logentry):
     @param logentry: log text 
     '''
     global logentries
-    print logentry 
+    print(logentry) 
     logentries += logentry + "\r\n"
     
 def logHeader():
@@ -85,7 +92,7 @@ def checkOS():
     else:
         logIt("One of the following modules are missing or have the wrong version:")
         logIt(import_log)
-        raise Exception, "Python Libraries Missmatch"
+        raise Exception("Python Libraries Missmatch")
 
 
 def checkAmplifierBase():
@@ -118,14 +125,14 @@ def checkAmplifierBase():
             amp.properties.TriggersOut == 8:
             logIt(log+"OK")
         else:
-            raise Exception, "HW Configuration Missmatch"
+            raise Exception("HW Configuration Missmatch")
         
         log = "  Start Acquisition: "
         amp.start()
         logIt(log+"OK")
             
         # read 2s of data
-        print "  ... collecting data, please wait (~5s)" 
+        print("  ... collecting data, please wait (~5s)") 
         log = "  Read Data: "
         eeg, trg, sct, atime, ptime, errors = readAmplifierData(amp, 2.0, 
                                                                 amp.properties.CountEeg, 
@@ -137,7 +144,7 @@ def checkAmplifierBase():
         logIt(log+"OK")
         
         totalSamples = sct.shape[1]
-        sampleTime = ptime / totalSamples
+        sampleTime = old_div(ptime, totalSamples)
         utilization = sampleTime * sample_rate[rate] * 100
         missingSamples = (sct[0][-1] - sct[0][0] + 1) - totalSamples
         
@@ -172,7 +179,7 @@ def checkAmplifierBase():
         cut = 5.0 / sample_rate[rate] * 2.0
         b,a = signal.filter_design.butter(2, cut, 'high') 
         eeg = signal.lfilter(b, a, eeg)
-        eeg = eeg[:,eeg.shape[1]/2:]
+        eeg = eeg[:,old_div(eeg.shape[1],2):]
 
         # check for channels shorted and abnormal values
         rms = np.sqrt(np.mean(eeg*eeg, 1))          # calculate RMS
@@ -185,7 +192,7 @@ def checkAmplifierBase():
         def checkRms(rms_values, rms_limit):
             # channels shorted (rms < limit)?
             mask = lambda x: (x < rms_limit)
-            shorted = np.array(map(mask, rms_values))
+            shorted = np.array(list(map(mask, rms_values)))
     
             # search for abnormal values ( > +/-2*SD)
             channels_ok = np.nonzero(rms_values > rms_limit)
@@ -194,7 +201,7 @@ def checkAmplifierBase():
                 sd = np.std(rms_values[channels_ok])
                 mean = rms_values[channels_ok].mean()
                 mask = lambda x: ((x > mean + 3.0*sd) or (x < mean - 3.0*sd)) and x > rms_limit
-                outlier = np.array(map(mask, rms_values))
+                outlier = np.array(list(map(mask, rms_values)))
                 channels_ok = ~(shorted | outlier)
                 if num_outlier == len(outlier):
                     break
@@ -208,7 +215,7 @@ def checkAmplifierBase():
         def createDispString(shorted, outlier, groupsize):
             channels = len(shorted)
             out_string = []
-            for group in range(channels / groupsize):
+            for group in range(old_div(channels, groupsize)):
                 disp = []
                 for n in range(group * groupsize, (group+1) * groupsize):
                     if n in np.nonzero(shorted)[0]:
@@ -263,11 +270,11 @@ def readAmplifierData(amp, duration, eegChannels, auxChannels):
     # discard first second
     for n in range(0, 20):
         time.sleep(0.05)
-        d, disconnected = amp.read(range(eegChannels + auxChannels),
+        d, disconnected = amp.read(list(range(eegChannels + auxChannels)),
                                    eegChannels,
                                    auxChannels)
         if d == None:
-            raise Exception, "No data transfer from amplifier"
+            raise Exception("No data transfer from amplifier")
     
     # get initial error counter
     initialErrors = amp.getDeviceStatus()[1]
@@ -278,12 +285,12 @@ def readAmplifierData(amp, duration, eegChannels, auxChannels):
     for n in range(0, dataChunks):
         time.sleep(0.05)
         tp = time.clock()
-        d, disconnected = amp.read(range(eegChannels + auxChannels),
+        d, disconnected = amp.read(list(range(eegChannels + auxChannels)),
                                    eegChannels,
                                    auxChannels)
         processingTime += time.clock() - tp
         if d == None:
-            raise Exception, "No data transfer from amplifier"
+            raise Exception("No data transfer from amplifier")
         if n == 0:
             eeg = d[0]
             trg = d[1]
@@ -317,5 +324,5 @@ if __name__ == '__main__':
     
     
     
-    raw_input("\nPress RETURN to close this window ..." ) 
+    input("\nPress RETURN to close this window ..." ) 
     sys.exit(1)

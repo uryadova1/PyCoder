@@ -31,7 +31,12 @@ along with PyCorder. If not, see <http://www.gnu.org/licenses/>.
 
 B{Revision:} $LastChangedRevision: 197 $
 '''
+from __future__ import division
 
+from builtins import str
+from builtins import range
+from past.utils import old_div
+from builtins import object
 from modbase import *
 from socket import *
 from select import *
@@ -44,7 +49,7 @@ from res import frmRdaClientOnline
 # RDA message GUID
 _MSG_GUID = "8E45584396C9864CAF4A98BBF6C91450"
 
-class RDAMessageType:
+class RDAMessageType(object):
     ''' RDA Message Types, negative values are for internal use only
     '''
     CONNECTED = -1      #: Connected to server
@@ -60,7 +65,7 @@ class RDAMessageType:
     INFO = 9            #: Recorder info Header, sent after connection and when setup is changed
     KEEP_ALIVE = 10000  #: Sent periodically to check whether the connection is still alive
 
-class RDAMessage():
+class RDAMessage(object):
     ''' RDA Message Header
     '''
     def __init__(self):
@@ -332,7 +337,7 @@ class RDA_Client(ModuleBase):
                 ch.highpass = 0.0               
                 ch.notchfilter = False          
                 ch.isReference = False          
-            self.data.sample_rate = 1e6 / samplingInterval
+            self.data.sample_rate = old_div(1e6, samplingInterval)
             self.data.recording_mode = RecordingMode.NORMAL
             
             # start acuisition
@@ -498,7 +503,7 @@ class RDA_Client(ModuleBase):
                 self.data.trigger_channel = np.zeros((1, self.data_count), 
                                                      dtype = np.uint32)
                 # calculate date and time for the first sample of this block in s
-                sampletime = self.data.sample_channel[0][0] / self.data.sample_rate
+                sampletime = old_div(self.data.sample_channel[0][0], self.data.sample_rate)
                 self.data.block_time = self.start_time + datetime.timedelta(seconds=sampletime)
                 
                 # reset buffers
@@ -645,7 +650,7 @@ class _OnlineCfgPane(Qt.QFrame, frmRdaClientOnline.Ui_frmRdaClientOnline):
     ''' RDA client online configuration pane
     '''
     def __init__(self, amp, *args):
-        apply(Qt.QFrame.__init__, (self,) + args)
+        Qt.QFrame.__init__(*(self,) + args)
         self.setupUi(self)
         self.amp = amp
        

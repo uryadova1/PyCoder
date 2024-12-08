@@ -33,6 +33,11 @@ B{Revision:} $LastChangedRevision: 204 $
 '''
 
 
+from builtins import str
+from builtins import map
+from builtins import range
+from future.utils import raise_
+from builtins import object
 from modbase import *
 from tools.modview import GenericTableWidget
 
@@ -40,7 +45,7 @@ from tools.modview import GenericTableWidget
 ################################################################
 # Base class for input devices
 
-class HardwareInputDevice():
+class HardwareInputDevice(object):
     deviceName = ""
     def __init__(self):
         
@@ -53,7 +58,7 @@ class HardwareInputDevice():
         self.inputChannel = 1                       # device is attached to this channel
         self.inputImpedances = []                   # ImpedanceIndex list with required input impedances 
         self.possibleGroups = [ChannelGroup.AUX]    # groups to which the device can be connected
-        self.possibleChannels = range(1,9)          # channels to which the device can be connected
+        self.possibleChannels = list(range(1,9))          # channels to which the device can be connected
         
         # device output configuration
         self.outputGroup = ChannelGroup.EEG         # processed channels will be put into this group 
@@ -86,7 +91,7 @@ class HardwareInputDevice():
         '''
         # get the required channel indices
         mask = lambda x: (x.inputgroup == self.inputGroup) and (x.input in self.inputChannels)
-        ch_map = np.array(map(mask, params.channel_properties))
+        ch_map = np.array(list(map(mask, params.channel_properties)))
         indices = np.nonzero(ch_map)[0]     # indices of required channels
         # dictionary with channel number as key and its index in the input data array as value
         idx = dict((x.input, indices[i]) for i, x in enumerate(params.channel_properties[indices]))
@@ -97,7 +102,7 @@ class HardwareInputDevice():
             self.input_channel_indices = np.empty_like(self.inputChannels) 
             for i in range(self.input_channel_indices.shape[0]):
                 for n in range(self.input_channel_indices.shape[1]):
-                    if not idx.has_key(self.inputChannels[i][n]):
+                    if self.inputChannels[i][n] not in idx:
                         self.input_channel_indices = np.array([[]])
                         raise Exception("missing input channels for device: " + self.deviceName)
                     self.input_channel_indices[i,n] = idx[self.inputChannels[i,n]]
@@ -138,7 +143,7 @@ class HardwareInputDevice():
         '''
         # the default implementation enables all output channels
         mask = lambda x: True
-        ch_map = np.array(map(mask, self.outputProperties))
+        ch_map = np.array(list(map(mask, self.outputProperties)))
         # indices of enabled output channels
         indices = np.nonzero(ch_map)[0]     
         return indices
@@ -211,7 +216,7 @@ class HardwareInputDevice():
         # check version, has to be lower or equal than current version
         version = xml.get("version")
         if (version == None) or (int(version) > self.xmlVersion):
-            raise Exception, "Device %s wrong version > %d"%(self.deviceName, self.xmlVersion)
+            raise_(Exception, "Device %s wrong version > %d"%(self.deviceName, self.xmlVersion))
         version = int(version)
         
         # get the values

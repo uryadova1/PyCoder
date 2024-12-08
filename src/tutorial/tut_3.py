@@ -31,7 +31,14 @@ along with PyCorder. If not, see <http://www.gnu.org/licenses/>.
 
 B{Revision:} $LastChangedRevision: 62 $
 '''
+from __future__ import division
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import map
+from builtins import str
+from builtins import range
+from past.utils import old_div
 from modbase import *
 from PyQt4 import QtGui
 from PyQt4 import Qwt5 as Qwt
@@ -195,7 +202,7 @@ class TUT_3(ModuleBase):
         
         # create channel selection indices from channel FiFo
         mask = lambda x: (x.name in self.channelFifo)
-        channel_ref = np.array(map(mask, self.params.channel_properties))
+        channel_ref = np.array(list(map(mask, self.params.channel_properties)))
         self.channel_index = np.nonzero(channel_ref)
         
         # create empty calculation buffers
@@ -303,7 +310,7 @@ class _OnlineCfgPane(Qt.QFrame):
     ''' Online configuration pane
     '''
     def __init__(self , *args):
-        apply(Qt.QFrame.__init__, (self,) + args)
+        Qt.QFrame.__init__(*(self,) + args)
 
         # make it nice ;-)
         self.setFrameShape(QtGui.QFrame.Panel)
@@ -402,7 +409,7 @@ class _SignalPane(Qt.QFrame):
     ''' FFT display pane
     '''
     def __init__(self , *args):
-        apply(Qt.QFrame.__init__, (self,) + args)
+        Qt.QFrame.__init__(*(self,) + args)
 
         # Initialize local variables
         self.data_queue = Queue.Queue(10)       # data exchange queue
@@ -531,10 +538,10 @@ class _FFT_Plot(Qwt.QwtPlot):
         '''
         lenX = channel_data.shape[0]
         window = np.hanning(lenX)
-        window = window / sum(window) * 2.0
+        window = old_div(window, sum(window)) * 2.0
         A = np.fft.fft(channel_data*window)
         B = np.abs(A) 
-        self.curve1.setData(self.xValues[:lenX/2], B[:lenX/2])
+        self.curve1.setData(self.xValues[:old_div(lenX,2)], B[:old_div(lenX,2)])
         self.replot()
 
 
@@ -548,7 +555,7 @@ class _ConfigurationPane(Qt.QFrame):
     Tab for global configuration dialog, contains only one item: "Max. number of plot items"
     '''
     def __init__(self, module, *args):
-        apply(Qt.QFrame.__init__, (self,) + args)
+        Qt.QFrame.__init__(*(self,) + args)
         
         # reference to our parent module (TUT_3)
         self.module = module

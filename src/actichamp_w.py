@@ -29,13 +29,21 @@ along with PyCorder. If not, see <http://www.gnu.org/licenses/>.
 @author: Norbert Hauser
 @version: 1.0
 '''
+from __future__ import division
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import zip
+from builtins import range
+from past.utils import old_div
+from builtins import object
 import ctypes
 import ctypes.wintypes
 import _ctypes
 import numpy as np
 import time
-import ConfigParser
+import configparser
 import platform
 
 # enable or disable the Python Signal Generator for simulation mode
@@ -390,7 +398,7 @@ class AmpVersion(object):
         '''
         # split version number
         version = ""
-        for i in reversed(range(4)):
+        for i in reversed(list(range(4))):
             version += "%02i"%((rawversion >> i*8) & 0xFF)
             if i:
                 version +="."
@@ -793,9 +801,9 @@ class ActiChamp(object):
             # copy remainder from last read back to sample buffer
             ctypes.memmove(self.buffer, self.binning_buffer, self.binning_offset)  
             # new remainder size
-            remainder = ((total_bytes / bytes_per_sample) % self.binning) * bytes_per_sample
+            remainder = ((old_div(total_bytes, bytes_per_sample)) % self.binning) * bytes_per_sample
             # number of binning aligned samples
-            binning_samples = total_bytes / bytes_per_sample / self.binning * self.binning
+            binning_samples = old_div(old_div(total_bytes, bytes_per_sample), self.binning) * self.binning
             src_offset = binning_samples * bytes_per_sample
             # copy new remainder to binning buffer
             ctypes.memmove(self.binning_buffer, ctypes.byref(self.buffer, src_offset), remainder) 
@@ -804,9 +812,9 @@ class ActiChamp(object):
             # there must be at least one binning sample
             if binning_samples == 0:
                 return None, None
-            items = binning_samples * bytes_per_sample / np.dtype(np.int32).itemsize
+            items = old_div(binning_samples * bytes_per_sample, np.dtype(np.int32).itemsize)
         else:
-            items = bytesread / np.dtype(np.int32).itemsize
+            items = old_div(bytesread, np.dtype(np.int32).itemsize)
         
         # channel order in buffer is S1CH1,S1CH2..S1CHn, S2CH1,S2CH2,..S2nCHn, ...
         x = np.fromstring(self.buffer, np.int32, items)
@@ -959,7 +967,7 @@ class ActiChamp(object):
         emulation = 0
         modules = 0
         try:
-            ini = ConfigParser.ConfigParser()
+            ini = configparser.ConfigParser()
             if self.x64:
                 filename = "ActiChamp_x64.dll.ini"
             else:
@@ -968,7 +976,7 @@ class ActiChamp(object):
             if len(ini.read(filename)) > 0:
                 emulation = ini.getint("Main", "Emulation")
                 if emulation != 0:
-                    modules = ini.getint("Emulation", "Model") / 32
+                    modules = old_div(ini.getint("Emulation", "Model"), 32)
                 try:
                     self.enablePllConfiguration = (ini.getint("Main", "EnablePllConfiguration") != 0)
                 except:
@@ -987,7 +995,7 @@ class ActiChamp(object):
             return
 
         # write new settings to INI file
-        ini = ConfigParser.ConfigParser()
+        ini = configparser.ConfigParser()
         if self.x64:
             filename = "ActiChamp_x64.dll.ini"
         else:
@@ -1064,13 +1072,13 @@ class ActiChamp(object):
         base = -1
         div = 1
         for sr in sample_rate:
-            div = sample_rate[sr] / samplingrate
+            div = old_div(sample_rate[sr], samplingrate)
             if int(div) == div:
                 if div < mindiv:
                     mindiv = div
                     base = sr
         if base >= 0:
-            div = int(sample_rate[base] / samplingrate)
+            div = int(old_div(sample_rate[base], samplingrate))
         return base, div
     
     def getDeviceInfo(self):
@@ -1257,7 +1265,7 @@ Signal Generator for simulation mode
 ------------------------------------------------------------
 '''
 
-class SignalGenerator():
+class SignalGenerator(object):
     def __init__(self, dtype=np.int16):
         self.dtype = dtype
         self.lasttime = 0
@@ -1270,7 +1278,7 @@ class SignalGenerator():
     def GetTriangleWave(self, freq, samplerate, amplitude, time):
         a = 1.0/freq
         t = np.linspace(0, time, samplerate)
-        trig = (np.abs(2*(t/a - np.floor(t/a + 0.5))) - 0.5) * amplitude * 2
+        trig = (np.abs(2*(old_div(t,a) - np.floor(old_div(t,a) + 0.5))) - 0.5) * amplitude * 2
         return t, np.asarray(trig, dtype=self.dtype)
         
     def GetSineWaveBuffers(self, NumChannels, StartFrequency, DeltaFrequency, StartAmplitude, DeltaAmplitude, SampleRate):

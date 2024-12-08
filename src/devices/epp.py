@@ -31,9 +31,17 @@ along with PyCorder. If not, see <http://www.gnu.org/licenses/>.
 
 B{Revision:} $LastChangedRevision: 201 $
 '''
+from __future__ import division
+from __future__ import absolute_import
 
+from builtins import str
+from builtins import map
+from builtins import range
+from future.utils import raise_
+from past.utils import old_div
+from builtins import object
 from modbase import *
-from devbase import HardwareInputDevice
+from .devbase import HardwareInputDevice
 from tools.modview import GenericTableWidget
 
 class EppChProperty(object):
@@ -53,7 +61,7 @@ class DeviceEpPreamp(HardwareInputDevice):
         self.inputChannel = 1                           # device is attached to this channel
         self.inputImpedances = [ImpedanceIndex.DATA, ImpedanceIndex.GND]    # we need impedance values for each input channel
         self.possibleGroups = [ChannelGroup.EEG]
-        self.possibleChannels = range(1,161)
+        self.possibleChannels = list(range(1,161))
         self.possibleGains = ['off','1','50']
         
         # device output configuration
@@ -77,7 +85,7 @@ class DeviceEpPreamp(HardwareInputDevice):
         @return: channel index array 
         '''
         mask = lambda x: x.gain != "off"
-        ch_map = np.array(map(mask, self.channelProperties))
+        ch_map = np.array(list(map(mask, self.channelProperties)))
         # indices of enabled output channels
         indices = np.nonzero(ch_map)[0]     
         return indices
@@ -103,7 +111,7 @@ class DeviceEpPreamp(HardwareInputDevice):
         ''' Configure the input channel numbers, based on the actiCHamp EEG channel number
         '''
         # adjust input channel to module boundaries
-        self.inputChannel = ((self.inputChannel-1)/32) * 32 + 1
+        self.inputChannel = (old_div((self.inputChannel-1),32)) * 32 + 1
         self.inputChannels = np.arange(self.inputChannel, self.inputChannel+32).reshape(-1,2)
         # create the gain divisor array
         g = []
@@ -132,7 +140,7 @@ class DeviceEpPreamp(HardwareInputDevice):
         dlg.gaintable.setData(self.channelProperties, columns, cblist)
         
         # module number from channel
-        module = ((self.inputChannel-1)/32) + 1
+        module = (old_div((self.inputChannel-1),32)) + 1
         dlg.spinboxModule.setValue(module)
         dlg.setWindowTitle("%s configuration"%(self.deviceName))
         if dlg.exec_() == Qt.QDialog.Accepted:
@@ -173,7 +181,7 @@ class DeviceEpPreamp(HardwareInputDevice):
         # check version, has to be lower or equal than current version
         version = xml.get("version")
         if (version == None) or (int(version) > self.xmlVersion):
-            raise Exception, "Device %s wrong version > %d"%(self.deviceName, self.xmlVersion)
+            raise_(Exception, "Device %s wrong version > %d"%(self.deviceName, self.xmlVersion))
         version = int(version)
         
         # get the values

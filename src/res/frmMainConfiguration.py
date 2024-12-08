@@ -7,6 +7,8 @@
 #
 # WARNING! All changes made in this file will be lost!
 
+from __future__ import absolute_import
+from builtins import object
 from PyQt4 import QtCore, QtGui
 
 class Ui_frmConfiguration(object):
@@ -41,4 +43,4 @@ class Ui_frmConfiguration(object):
         frmConfiguration.setWindowTitle(QtGui.QApplication.translate("frmConfiguration", "Configuration", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab1), QtGui.QApplication.translate("frmConfiguration", "Tab 1", None, QtGui.QApplication.UnicodeUTF8))
 
-import resources_rc
+from . import resources_rc

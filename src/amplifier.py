@@ -28,7 +28,12 @@ along with PyCorder. If not, see <http://www.gnu.org/licenses/>.
 @author: Norbert Hauser
 @version: 1.0
 '''
+from __future__ import division
 
+from builtins import map
+from builtins import str
+from builtins import range
+from past.utils import old_div
 from scipy import signal
 from PyQt4 import Qt
 from modbase import *
@@ -206,7 +211,7 @@ class AMP_ActiChamp(ModuleBase):
         if AMP_MULTIPLE_REF:
             return
         # else keep the first reference channel only
-        eeg_ref = np.array(map(lambda x: x.isReference, self.channel_config))
+        eeg_ref = np.array([x.isReference for x in self.channel_config])
         ref_index = np.nonzero(eeg_ref)[0]     # indices of reference channel(s)
         for ch in self.channel_config[ref_index[1:]]:
             ch.isReference = False
@@ -418,12 +423,12 @@ class AMP_ActiChamp(ModuleBase):
         '''
         # get all active eeg channel indices (including reference channel)
         mask = lambda x: (x.group == ChannelGroup.EEG) and (x.enable | x.isReference) and (x.input <= self.amp.properties.CountEeg)
-        eeg_map = np.array(map(mask, self.channel_config))
+        eeg_map = np.array(list(map(mask, self.channel_config)))
         self.eeg_indices = np.nonzero(eeg_map)[0]     # indices of all eeg channels
 
         # get all active aux channel indices
         mask = lambda x: (x.group == ChannelGroup.AUX) and x.enable and (x.input <= self.amp.properties.CountAux)
-        eeg_map = np.array(map(mask, self.channel_config))
+        eeg_map = np.array(list(map(mask, self.channel_config)))
         self.aux_indices = np.nonzero(eeg_map)[0]     # indices of all aux channels
         self.property_indices = np.append(self.eeg_indices, self.aux_indices) 
         
@@ -438,14 +443,12 @@ class AMP_ActiChamp(ModuleBase):
 
         # get the reference channel indices
         #mask = lambda x: (x.group == ChannelGroup.EEG) and x.isReference and (x.input <= self.amp.properties.CountEeg)
-        eeg_ref = np.array(map(lambda x: x.isReference, self.eeg_data.channel_properties))
+        eeg_ref = np.array([x.isReference for x in self.eeg_data.channel_properties])
         self.ref_index = np.nonzero(eeg_ref)[0]     # indices of reference channel(s)
         if len(self.ref_index) and not AMP_MULTIPLE_REF:
             # use only the first reference channel
             self.ref_index = self.ref_index[0:1]    
-            idx = np.nonzero(map(lambda x: x not in self.ref_index, 
-                                 range(0, len(self.eeg_indices)) 
-                                 ) 
+            idx = np.nonzero([x not in self.ref_index for x in range(0, len(self.eeg_indices))] 
                              )[0]
             for prop in self.eeg_data.channel_properties[idx]:
                 prop.isReference = False
@@ -468,9 +471,7 @@ class AMP_ActiChamp(ModuleBase):
         self.ref_remove_index = self.ref_index
         if (self.recording_mode != CHAMP_MODE_IMPEDANCE) and len(self.ref_index):
             # set reference channel names for all other electrodes
-            idx = np.nonzero(map(lambda x: x not in self.ref_index, 
-                                 range(0, len(self.eeg_indices)) 
-                                 ) 
+            idx = np.nonzero([x not in self.ref_index for x in range(0, len(self.eeg_indices))] 
                              )[0]
             for prop in self.eeg_data.channel_properties[idx]:
                 prop.refname = "REF"
@@ -482,8 +483,7 @@ class AMP_ActiChamp(ModuleBase):
                 self.eeg_data.eeg_channels = np.delete(self.eeg_data.eeg_channels, self.ref_index, 0)
             '''
             # remove all disabled reference channels
-            ref_dis = np.array(map(lambda x: x.isReference and not x.enable, 
-                                   self.eeg_data.channel_properties))
+            ref_dis = np.array([x.isReference and not x.enable for x in self.eeg_data.channel_properties])
             self.ref_remove_index = np.nonzero(ref_dis)[0]     # indices of disabled reference channels
             self.eeg_data.channel_properties = np.delete(self.eeg_data.channel_properties, self.ref_remove_index, 0)
             self.eeg_data.eeg_channels = np.delete(self.eeg_data.eeg_channels, self.ref_remove_index, 0)
@@ -497,12 +497,12 @@ class AMP_ActiChamp(ModuleBase):
         '''
         # get all eeg channel indices
         mask = lambda x: (x.group == ChannelGroup.EEG) and (x.input <= self.amp.properties.CountEeg)
-        eeg_map = np.array(map(mask, self.channel_config))
+        eeg_map = np.array(list(map(mask, self.channel_config)))
         self.eeg_indices = np.nonzero(eeg_map)[0]     # indices of all eeg channels
 
         # get all aux channel indices
         mask = lambda x: (x.group == ChannelGroup.AUX) and (x.input <= self.amp.properties.CountAux)
-        eeg_map = np.array(map(mask, self.channel_config))
+        eeg_map = np.array(list(map(mask, self.channel_config)))
         self.aux_indices = np.nonzero(eeg_map)[0]     # indices of all aux channels
         self.property_indices = np.append(self.eeg_indices, self.aux_indices) 
         
@@ -781,7 +781,7 @@ class AMP_ActiChamp(ModuleBase):
 
             self.eeg_data.eeg_channels = filtered[:, self.binningoffset::self.binning]
             self.eeg_data.trigger_channel = np.bitwise_or.reduce(d[1][:].reshape(-1, self.binning), axis=1).reshape(1,-1)
-            self.eeg_data.sample_channel = d[2][:, self.binningoffset::self.binning] / self.binning
+            self.eeg_data.sample_channel = old_div(d[2][:, self.binningoffset::self.binning], self.binning)
             self.eeg_data.sample_counter += self.eeg_data.sample_channel.shape[1]
         else:
             self.eeg_data.eeg_channels = d[0]
@@ -815,7 +815,7 @@ class AMP_ActiChamp(ModuleBase):
             
                 
         # calculate date and time for the first sample of this block in s
-        sampletime = self.eeg_data.sample_channel[0][0] / self.eeg_data.sample_rate
+        sampletime = old_div(self.eeg_data.sample_channel[0][0], self.eeg_data.sample_rate)
         self.eeg_data.block_time = self.start_time + datetime.timedelta(seconds=sampletime)
 
         # process connected input devices
@@ -946,7 +946,7 @@ class _OnlineCfgPane(Qt.QFrame, frmActiChampOnline.Ui_frmActiChampOnline):
         ''' Constructor
         @param amp: parent module object
         '''
-        apply(Qt.QFrame.__init__, (self,) + args)
+        Qt.QFrame.__init__(*(self,) + args)
         self.setupUi(self)
         self.amp = amp
        
@@ -1007,7 +1007,7 @@ class _DeviceConfigurationPane(Qt.QFrame):
     ''' ActiChamp configuration pane
     '''
     def __init__(self, amplifier, *args):
-        apply(Qt.QFrame.__init__, (self,) + args)
+        Qt.QFrame.__init__(*(self,) + args)
         
         # reference to our parent module
         self.amplifier = amplifier
@@ -1176,7 +1176,7 @@ class _ConfigurationPane(Qt.QFrame, frmActiChampConfig.Ui_frmActiChampConfig):
         ''' Constructor
         @param amplifier: parent module object
         '''
-        apply(Qt.QFrame.__init__, (self,) + args)
+        Qt.QFrame.__init__(*(self,) + args)
         self.setupUi(self)
         self.tableViewChannels.horizontalHeader().setResizeMode(Qt.QHeaderView.ResizeToContents)
         self.tableViewAux.horizontalHeader().setResizeMode(Qt.QHeaderView.ResizeToContents)
@@ -1211,7 +1211,7 @@ class _ConfigurationPane(Qt.QFrame, frmActiChampConfig.Ui_frmActiChampConfig):
         '''
         # EEG channel table, show available channels only
         mask = lambda x: (x.group == ChannelGroup.EEG) & (x.input <= self.amplifier.amp.properties.CountEeg)
-        ch_map = np.array(map(mask, self.amplifier.channel_config))
+        ch_map = np.array(list(map(mask, self.amplifier.channel_config)))
         ch_indices = np.nonzero(ch_map)[0]     
         self.eeg_model = _ConfigTableModel(self.amplifier.channel_config[ch_indices])
         self.tableViewChannels.setModel(self.eeg_model)
@@ -1221,7 +1221,7 @@ class _ConfigurationPane(Qt.QFrame, frmActiChampConfig.Ui_frmActiChampConfig):
         # AUX channel table, show available channels only
         mask = lambda x: (x.group == ChannelGroup.AUX) & (x.input <= self.amplifier.amp.properties.CountAux)
         #mask = lambda x: x.group == ChannelGroup.AUX
-        ch_map = np.array(map(mask, self.amplifier.channel_config))
+        ch_map = np.array(list(map(mask, self.amplifier.channel_config)))
         ch_indices = np.nonzero(ch_map)[0]     
         self.aux_model = _ConfigTableModel(self.amplifier.channel_config[ch_indices])
         self.tableViewAux.setModel(self.aux_model)
@@ -1274,7 +1274,7 @@ class _ConfigurationPane(Qt.QFrame, frmActiChampConfig.Ui_frmActiChampConfig):
         '''
         # get the selected reference channel index
         mask = lambda x: x.isReference & (x.group == ChannelGroup.EEG) & (x.input <= self.amplifier.amp.properties.CountEeg)
-        ref = np.array(map(mask, self.amplifier.channel_config))
+        ref = np.array(list(map(mask, self.amplifier.channel_config)))
         ref_index = np.nonzero(ref)[0]
         # update display
         '''

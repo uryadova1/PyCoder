@@ -7,6 +7,8 @@
 #
 # WARNING! All changes made in this file will be lost!
 
+from __future__ import absolute_import
+from builtins import object
 from PyQt4 import QtCore, QtGui
 
 class Ui_frmActiChampOnline(object):
@@ -103,4 +105,4 @@ class Ui_frmActiChampOnline(object):
         self.pushButtonStartTest.setText(QtGui.QApplication.translate("frmActiChampOnline", "Test\n"
 "Mode", None, QtGui.QApplication.UnicodeUTF8))
 
-import resources_rc
+from . import resources_rc

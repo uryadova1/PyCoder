@@ -7,6 +7,8 @@
 #
 # WARNING! All changes made in this file will be lost!
 
+from __future__ import absolute_import
+from builtins import object
 from PyQt4 import QtCore, QtGui
 
 class Ui_frmRdaClientOnline(object):
@@ -89,4 +91,4 @@ class Ui_frmRdaClientOnline(object):
         self.pushButtonRemove.setToolTip(QtGui.QApplication.translate("frmRdaClientOnline", "Remove IP from List", None, QtGui.QApplication.UnicodeUTF8))
         self.pushButtonRemove.setText(QtGui.QApplication.translate("frmRdaClientOnline", "-", None, QtGui.QApplication.UnicodeUTF8))
 
-import resources_rc
+from . import resources_rc

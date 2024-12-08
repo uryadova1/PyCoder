@@ -32,6 +32,7 @@ along with PyCorder. If not, see <http://www.gnu.org/licenses/>.
 B{Revision:} $LastChangedRevision: 69 $
 '''
 
+from builtins import range
 from scipy import signal
 from modbase import *
 

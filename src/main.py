@@ -53,7 +53,15 @@ B{Dependencies:}
 @author: Norbert Hauser
 @version: 1.0
 '''
-from PyQt4.Qt import QString
+from __future__ import division
+from __future__ import print_function
+# from past.builtins import cmp
+from builtins import input
+from builtins import map
+from builtins import str
+from builtins import range
+# from past.utils import old_div
+from PyQt5.Qt import QString
 
 __version__ = "1.0.9"
 '''Application Version'''
@@ -99,10 +107,10 @@ if len(loadlibs.import_log) > 0:
     print("PyCorder: The following libraries are missing or have the wrong version\r\n\r\n")
     print(loadlibs.import_log)
     if "missing" in loadlibs.import_log:
-        raw_input("Press RETURN to close the application ...")
+        input("Press RETURN to close the application ...")
         sys.exit(1)
     else:
-        raw_input("Press RETURN to continue ...")
+        input("Press RETURN to continue ...")
 
 '''
 ------------------------------------------------------------
@@ -467,7 +475,7 @@ class MainWindow(Qt.QMainWindow, frmMain.Ui_MainWindow):
         if dlg.exec_() == True:
             try:
                 files = dlg.selectedFiles()
-                file_name = unicode(files[0])
+                file_name = str(files[0])
                 # load configuration from XML file
                 self._loadConfiguration(file_name)
                 # set preferences
@@ -511,7 +519,7 @@ class MainWindow(Qt.QMainWindow, frmMain.Ui_MainWindow):
         if dlg.exec_() == True:
             try:
                 files = dlg.selectedFiles()
-                file_name = unicode(files[0])
+                file_name = str(files[0])
                 # save configuration to XML
                 self._saveConfiguration(file_name)
                 # set preferences
@@ -546,7 +554,7 @@ class MainWindow(Qt.QMainWindow, frmMain.Ui_MainWindow):
             if not homedir.cd(appdir):
                 homedir.mkdir(appdir)
                 homedir.cd(appdir)
-            filename = unicode(homedir.absoluteFilePath("preferences.xml"))
+            filename = str(homedir.absoluteFilePath("preferences.xml"))
             etree.ElementTree(root).write(filename, pretty_print=True, encoding="UTF-8")
         except:
             pass
@@ -560,7 +568,7 @@ class MainWindow(Qt.QMainWindow, frmMain.Ui_MainWindow):
             appdir = "." + self.application_name
             if not homedir.cd(appdir):
                 return
-            filename = unicode(homedir.absoluteFilePath("preferences.xml"))
+            filename = str(homedir.absoluteFilePath("preferences.xml"))
 
             # read XML file
             cfg = objectify.parse(filename)
@@ -602,7 +610,7 @@ class MainWindow(Qt.QMainWindow, frmMain.Ui_MainWindow):
         if dlg.exec_() == True:
             try:
                 files = dlg.selectedFiles()
-                file_name = unicode(files[0])
+                file_name = str(files[0])
                 # set preferences
                 dir, fn = os.path.split(file_name)
                 self.log_dir = dir
@@ -878,7 +886,7 @@ class MainWindow(Qt.QMainWindow, frmMain.Ui_MainWindow):
             self.battery_logmode = -1
 
             # log to users home /.PyCorder directory
-            logpath = os.path.join(unicode(Qt.QDir.toNativeSeparators(Qt.QDir.homePath())), "." + self.application_name)
+            logpath = os.path.join(str(Qt.QDir.toNativeSeparators(Qt.QDir.homePath())), "." + self.application_name)
             # create or use the auto incremented file name 
             homedir = Qt.QDir.home()
             appdir = "." + self.application_name
@@ -982,7 +990,7 @@ class DlgLogView(Qt.QDialog, frmLogView.Ui_frmLogView):
     '''
 
     def __init__(self, *args):
-        apply(Qt.QDialog.__init__, (self,) + args)
+        Qt.QDialog.__init__(*(self,) + args)
         self.setupUi(self)
 
     def setLogEntry(self, entry):
@@ -1100,7 +1108,7 @@ class StatusBarWidget(Qt.QWidget, frmMainStatusBar.Ui_frmStatusBar):
         self.utilizationFifo.append(utilization)
         if len(self.utilizationFifo) > 5:
             self.utilizationFifo.popleft()
-        utilization = sum(self.utilizationFifo) / len(self.utilizationFifo)
+        utilization = old_div(sum(self.utilizationFifo), len(self.utilizationFifo))
         self.utilizationMaxValue = max(self.utilizationMaxValue, utilization)
 
         # slow down utilization display
@@ -1171,7 +1179,7 @@ class StatusBarWidget(Qt.QWidget, frmMainStatusBar.Ui_frmStatusBar):
         # lock an error display until LogView is shown
         if ((self.lockError == False) or (event.severity > 0)) and event.type != EventType.LOG:
             # update label
-            self.labelInfo.setText(unicode(event))
+            self.labelInfo.setText(str(event))
             palette = self.labelInfo.palette()
             if event.type == EventType.ERROR:
                 palette.setColor(self.labelInfo.backgroundRole(), Qt.Qt.red)
@@ -1254,8 +1262,8 @@ def cmpver(a, b, n=3):
         except ValueError:
             return i
 
-    a = map(fixup, re.findall("\d+|\w+", a))
-    b = map(fixup, re.findall("\d+|\w+", b))
+    a = list(map(fixup, re.findall("\d+|\w+", a)))
+    b = list(map(fixup, re.findall("\d+|\w+", b)))
     return cmp(a[:n], b[:n])
 
 

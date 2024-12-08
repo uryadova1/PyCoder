@@ -31,9 +31,10 @@ along with PyCorder. If not, see <http://www.gnu.org/licenses/>.
 
 B{Revision:} $LastChangedRevision: 69 $
 '''
+from __future__ import absolute_import
 
 from modbase import *
-import frmTUT4Online
+from . import frmTUT4Online
 
 class TUT_4(ModuleBase):
     ''' Tutorial Module 4
@@ -149,7 +150,7 @@ class _OnlineCfgPane(Qt.QFrame, frmTUT4Online.Ui_frmTUT4Online):
     '''
     def __init__(self, module, *args):
         # initialize designer generated user interface
-        apply(Qt.QFrame.__init__, (self,) + args)
+        Qt.QFrame.__init__(*(self,) + args)
         self.setupUi(self)
         
         self.module = module

@@ -31,10 +31,14 @@ along with PyCorder. If not, see <http://www.gnu.org/licenses/>.
 
 B{Revision:} $LastChangedRevision: 204 $
 '''
+from __future__ import division
+from __future__ import absolute_import
 
 
+from builtins import range
+from past.utils import old_div
 from modbase import *
-from devbase import HardwareInputDevice
+from .devbase import HardwareInputDevice
 
     
 class DeviceBipToAux(HardwareInputDevice):    
@@ -48,7 +52,7 @@ class DeviceBipToAux(HardwareInputDevice):
         self.inputChannel = 1                           # device is attached to this group channel
         self.inputImpedances = []                       # no impedance values
         self.possibleGroups = [ChannelGroup.AUX]
-        self.possibleChannels = range(1,9)
+        self.possibleChannels = list(range(1,9))
         self.inputGain = 100.0                          # analog gain is 100 for this module
         
         # device output configuration
@@ -58,7 +62,7 @@ class DeviceBipToAux(HardwareInputDevice):
         self.update_device()
         
     def output_function(self, x):
-        return x[:,0] / self.inputGain
+        return old_div(x[:,0], self.inputGain)
 
     def impedance_function(self, x):
         return x[:,0] * 0.0                             # this module has no impedance mode

@@ -1,5 +1,5 @@
-numpy>=1.25.0
-scipy>=1.11.0
-pyqt5>=5.15.9
-matplotlib>=3.8.0
-lxml>=4.9.3
+numpy>=1.21.0
+scipy>=1.7.0
+pyqt5>=5.15.6
+matplotlib>=3.5.0
+lxml>=4.6.4

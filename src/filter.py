@@ -30,7 +30,12 @@ along with PyCorder. If not, see <http://www.gnu.org/licenses/>.
 
 B{Revision:} $LastChangedRevision: 197 $
 '''
+from __future__ import division
 
+from builtins import str
+from builtins import map
+from builtins import range
+from past.utils import old_div
 from scipy import signal
 from modbase import *
 from res import frmFilterConfig
@@ -96,12 +101,12 @@ class FLT_Eeg(ModuleBase):
         if (frequency == 0.0) or (frequency > self.samplefreq/2.0):
             return None
         if type == "bandstop":
-            cut1 = (frequency-1.0) / self.samplefreq * 2.0
-            cut2 = (frequency+1.0) / self.samplefreq * 2.0
+            cut1 = old_div((frequency-1.0), self.samplefreq) * 2.0
+            cut2 = old_div((frequency+1.0), self.samplefreq) * 2.0
             b,a = signal.filter_design.iirfilter(2, [cut1, cut2], btype=type, ftype='butter') 
             #b,a = signal.filter_design.iirfilter(2, [cut1, cut2], rs=40.0, rp=0.5, btype=type, ftype='elliptic') 
         else:
-            cut = frequency / self.samplefreq * 2.0
+            cut = old_div(frequency, self.samplefreq) * 2.0
             b,a = signal.filter_design.butter(self.filterorder, cut, btype=type) 
         zi = signal.lfiltic(b, a, (0.0,))
         czi = np.resize(zi, (slice.stop - slice.start, len(zi)))
@@ -323,7 +328,7 @@ class _ConfigurationPane(Qt.QFrame, frmFilterConfig.Ui_frmFilterConfig):
     def __init__(self, filter, *args):
         ''' Constructor
         '''
-        apply(Qt.QFrame.__init__, (self,) + args)
+        Qt.QFrame.__init__(*(self,) + args)
         self.setupUi(self)
         self.tableView.horizontalHeader().setResizeMode(Qt.QHeaderView.ResizeToContents)
 
@@ -391,7 +396,7 @@ class _ConfigurationPane(Qt.QFrame, frmFilterConfig.Ui_frmFilterConfig):
         '''
         # AUX channel table
         mask = lambda x: x.group != ChannelGroup.EEG
-        ch_map = np.array(map(mask, self.filter.params.channel_properties))
+        ch_map = np.array(list(map(mask, self.filter.params.channel_properties)))
         ch_indices = np.nonzero(ch_map)[0]     
         self.table_model = _ConfigTableModel(self.filter.params.channel_properties[ch_indices])
         self.tableView.setModel(self.table_model)

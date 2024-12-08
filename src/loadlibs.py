@@ -38,6 +38,7 @@ CHECK LIBRARY DEPENDENCIES
 ------------------------------------------------------------
 '''
 
+from builtins import str
 import sys
 
 import_log = ""

@@ -32,11 +32,17 @@ along with PyCorder. If not, see <http://www.gnu.org/licenses/>.
 B{Revision:} $LastChangedRevision: 201 $
 '''
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import range
+from future.utils import raise_
+from builtins import object
 from PyQt4 import Qt
 import numpy as np
 import time
 import datetime
-import Queue
+import queue
 import threading
 import copy
 import os, sys, traceback
@@ -72,7 +78,7 @@ class ModuleError(Exception):
         return self.value
 
 
-class EventType:
+class EventType(object):
     ''' Module Event Types
     @ivar LOGMESSAGE: display event description in status bar info field and log it
     @ivar STATUS: display event description in dedicated status_field
@@ -81,16 +87,16 @@ class EventType:
     @ivar COMMAND: send an command to the module chain
     @ivar LOG: only log the message, without showing it in the status bar     
     '''
-    (LOGMESSAGE, STATUS, MESSAGE, ERROR, COMMAND, LOG) = range(6)
+    (LOGMESSAGE, STATUS, MESSAGE, ERROR, COMMAND, LOG) = list(range(6))
 
     
-class ErrorSeverity:
+class ErrorSeverity(object):
     ''' Module event classification in case of ERROR
     @ivar IGNORE: error can be safely ignored
     @ivar NOTIFY: notify user
     @ivar STOP: notify and stop acquisition
     '''
-    (IGNORE, NOTIFY, STOP) = range(3)
+    (IGNORE, NOTIFY, STOP) = list(range(3))
 
 class ModuleEvent(object):
     ''' Generic module event
@@ -119,27 +125,27 @@ class ModuleEvent(object):
         return txt
 
 
-class RecordingMode:
+class RecordingMode(object):
     ''' Module Recording Modes
     @ivar NORMAL: Record EEG
     @ivar TEST: Record test signals
     @ivar IMPEDANCE: Impedance measurement 
     '''
-    (NORMAL, TEST, IMPEDANCE) = range(3)
+    (NORMAL, TEST, IMPEDANCE) = list(range(3))
 
-class ImpedanceIndex:
+class ImpedanceIndex(object):
     ''' Index for impedance values within the data array for each channel
     '''
-    (DATA, REF, GND) = range(3)
+    (DATA, REF, GND) = list(range(3))
     Name = ["+", "-", "GND"]
 
-class ChannelGroup:
+class ChannelGroup(object):
     ''' EEG channel groups used in EEG_ChannelProperties
     @ivar EEG: channel belongs to EEG channel group
     @ivar AUX: channel belongs to AUX channel group
     @ivar EPP: channel belongs to EPP (EP-PreAmp) group
     '''
-    (EEG, AUX, EPP, BIP) = range(4)
+    (EEG, AUX, EPP, BIP) = list(range(4))
     Name = ["EEG", "AUX", "EPP", "BIP"]
 
 
@@ -209,7 +215,7 @@ class EEG_ChannelProperties(object):
         # check version, has to be lower or equal than current version
         version = xml.get("version")
         if (version == None) or (int(version) > self.xmlVersion):
-            raise Exception, "channel %d wrong version > %d"%(self.input, self.xmlVersion)
+            raise_(Exception, "channel %d wrong version > %d"%(self.input, self.xmlVersion))
         version = int(version)
         
         # get the values
@@ -348,7 +354,7 @@ class ModuleBase(Qt.QObject):
         self._receivers = [] 
 
         # receiver input queue and data block
-        self._input_queue = Queue.Queue(queuesize)
+        self._input_queue = queue.Queue(queuesize)
         self._input_data = EEG_DataBlock()
 
         # reset the I/O worker thread
@@ -636,7 +642,7 @@ class ModuleBase(Qt.QObject):
                 self.process_input(data)
                 wt += time.clock() - t
                 self._thLock.release()
-            except Queue.Empty:
+            except queue.Empty:
                 self._thLock.release()
             except Exception as e:
                 self._thLock.release()

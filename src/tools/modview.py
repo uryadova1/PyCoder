@@ -32,6 +32,7 @@ along with PyCorder. If not, see <http://www.gnu.org/licenses/>.
 B{Revision:} $LastChangedRevision: 197 $
 '''
 
+from builtins import range
 from PyQt4 import Qt
 import types
 
@@ -75,7 +76,7 @@ class GenericTableWidget(Qt.QTableView):
     def __init__(self, *args, **kwargs):
         ''' Constructor
         '''
-        apply(Qt.QTableView.__init__, (self,) + args)
+        Qt.QTableView.__init__(*(self,) + args)
 
         self.setAlternatingRowColors(True)
         #self.setObjectName("tableViewGeneric")
@@ -225,7 +226,7 @@ class _DataTableModel(Qt.QAbstractTableModel):
         if hasattr(data, variable_name):
             d = Qt.QVariant(vars(data)[variable_name])
             # get value from combobox list values?
-            if self.columns[column].has_key('indexed') and self.cblist.has_key(variable_name):
+            if 'indexed' in self.columns[column] and variable_name in self.cblist:
                 idx, ok = d.toInt()
                 if ok and idx >=0 and idx < len(self.cblist[variable_name]):
                     d = Qt.QVariant(self.cblist[variable_name][idx])
@@ -250,7 +251,7 @@ class _DataTableModel(Qt.QAbstractTableModel):
         variable_name = self.columns[column]['variable']
 
         # get index from combobox list values
-        if self.columns[column].has_key('indexed') and self.cblist.has_key(variable_name):
+        if 'indexed' in self.columns[column] and variable_name in self.cblist:
             v = value.toString()
             if v in self.cblist[variable_name]:
                 value = Qt.QVariant(self.cblist[variable_name].index(v))
@@ -269,7 +270,7 @@ class _DataTableModel(Qt.QAbstractTableModel):
             elif t is int:
                 vars(data)[variable_name] = value.toInt()[0]
                 return True
-            elif t in types.StringTypes:
+            elif t in (str,):
                 vars(data)[variable_name] = "%s" % value.toString()
                 return True
             else:
@@ -293,7 +294,7 @@ class _DataTableModel(Qt.QAbstractTableModel):
         ''' 
         if column >= len(self.columns):
             return Qt.QVariant()
-        if self.columns[column].has_key('min'):
+        if 'min' in self.columns[column]:
             return Qt.QVariant(self.columns[column]['min'])
         else:
             return Qt.QVariant()
@@ -305,7 +306,7 @@ class _DataTableModel(Qt.QAbstractTableModel):
         ''' 
         if column >= len(self.columns):
             return Qt.QVariant()
-        if self.columns[column].has_key('max'):
+        if 'max' in self.columns[column]:
             return Qt.QVariant(self.columns[column]['max'])
         else:
             return Qt.QVariant()
@@ -317,7 +318,7 @@ class _DataTableModel(Qt.QAbstractTableModel):
         ''' 
         if column >= len(self.columns):
             return Qt.QVariant()
-        if self.columns[column].has_key('dec'):
+        if 'dec' in self.columns[column]:
             return Qt.QVariant(self.columns[column]['dec'])
         else:
             return Qt.QVariant()
@@ -329,7 +330,7 @@ class _DataTableModel(Qt.QAbstractTableModel):
         ''' 
         if column >= len(self.columns):
             return Qt.QVariant()
-        if self.columns[column].has_key('step'):
+        if 'step' in self.columns[column]:
             return Qt.QVariant(self.columns[column]['step'])
         else:
             return Qt.QVariant()
@@ -346,7 +347,7 @@ class _DataTableModel(Qt.QAbstractTableModel):
         # get variable name from column description
         variable_name = self.columns[column]['variable']
         # lookup list in dictionary
-        if self.cblist.has_key(variable_name):
+        if variable_name in self.cblist:
             return Qt.QVariant(self.cblist[variable_name])
         else:
             return Qt.QVariant()

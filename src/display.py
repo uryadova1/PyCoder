@@ -31,7 +31,11 @@ along with PyCorder. If not, see <http://www.gnu.org/licenses/>.
 
 B{Revision:} $LastChangedRevision: 197 $
 '''
+from __future__ import division
 
+from builtins import str
+from builtins import range
+from past.utils import old_div
 from PyQt4 import Qt
 from PyQt4 import Qwt5 as Qwt
 from modbase import *
@@ -220,8 +224,8 @@ class DISP_Scope(Qwt.QwtPlot, ModuleBase):
             self.dataavailable = False
             # send performance / utilization event
             totaltime = 1000.0 * self.eeg.performance_timer_max
-            sampletime = 1000.0 * totaltime / self.eeg.sample_channel.shape[1]
-            utilization = sampletime * self.eeg.sample_rate / 1e6 * 100.0
+            sampletime = old_div(1000.0 * totaltime, self.eeg.sample_channel.shape[1])
+            utilization = old_div(sampletime * self.eeg.sample_rate, 1e6) * 100.0
             if self._instance == 0:
                 self.send_event(ModuleEvent(self._object_name,
                                             EventType.STATUS,
@@ -344,7 +348,7 @@ class DISP_Scope(Qwt.QwtPlot, ModuleBase):
 
         # insert new traces
         font = Qt.QFont("arial", 8)
-        for pccount in xrange(self.channel_group.shape[0]):
+        for pccount in range(self.channel_group.shape[0]):
             color = self.channel_group_properties[pccount].color
             title = Qwt.QwtText(self.channel_group_properties[pccount].name)
             title.setFont(font)
@@ -401,7 +405,7 @@ class DISP_Scope(Qwt.QwtPlot, ModuleBase):
         
         # calculate downsampling size
         points = self.channel_group.shape[1]
-        down = int(points / (self.eeg.sample_rate * self.dtX))
+        down = int(old_div(points, (self.eeg.sample_rate * self.dtX)))
 
         # down sample and copy raw data to ring buffer
         offset = 0
@@ -430,7 +434,7 @@ class DISP_Scope(Qwt.QwtPlot, ModuleBase):
             
             # and calculate new time axis offset
             sc = self.eeg.sample_channel[0][self.binningoffset::self.binning]   # down sample the sample counter buffer
-            scLeft = sc[len(sc)-self.writePointer-1] / self.eeg.sample_rate     # sample counter at the leftmost screen position
+            scLeft = old_div(sc[len(sc)-self.writePointer-1], self.eeg.sample_rate)     # sample counter at the leftmost screen position
             #self.TimeScale.setOffset(scLeft)
             #self.update()
 
@@ -446,7 +450,7 @@ class DISP_Scope(Qwt.QwtPlot, ModuleBase):
         channels = len(self.traces)
         bottomMargin = -2.0             # no margin, clip below window
         topMargin = channels + 1.0      # no margin, clip above window
-        scale = self.axisScaleDiv(Qwt.QwtPlot.yLeft).range() / self.scale / 10.0
+        scale = old_div(self.axisScaleDiv(Qwt.QwtPlot.yLeft).range(), self.scale) / 10.0
         offset = np.arange(channels, 0, -1).reshape(-1,1) - 0.8
         
         # baseline correction
@@ -475,7 +479,7 @@ class DISP_Scope(Qwt.QwtPlot, ModuleBase):
             self.update_display = False
 
             # check color attributes
-            for pccount in xrange(self.channel_group.shape[0]):
+            for pccount in range(self.channel_group.shape[0]):
                 if self.selectedChannel == self.channel_group_properties[pccount].name:
                     color = Qt.Qt.green
                 else:
@@ -523,11 +527,11 @@ class DISP_Scope(Qwt.QwtPlot, ModuleBase):
         
         # calculate new binning value for current sample rate
         inputsize = self.eeg.sample_rate * self.timebase
-        self.binning = max([1,int(inputsize / self.xsize)])
+        self.binning = max([1,int(old_div(inputsize, self.xsize))])
         self.binningoffset = 0
         
         # calculate new ring buffer size
-        self.dtX = self.binning / self.eeg.sample_rate 
+        self.dtX = old_div(self.binning, self.eeg.sample_rate) 
         self.xValues = np.arange(0.0, self.timebase, self.dtX)
         self.buffer = np.zeros((len(self.traces), len(self.xValues)), 'd' ) # channel buffer
         self.sc_buffer = np.zeros((1, len(self.xValues)), np.uint64 )        # sample counter buffer
@@ -649,7 +653,7 @@ class _TimeScaleDraw(Qwt.QwtScaleDraw):
     ''' Draw custom time values for x-axis
     '''
     def __init__(self, *args):
-        apply(Qwt.QwtScaleDraw.__init__, (self,) + args)
+        Qwt.QwtScaleDraw.__init__(*(self,) + args)
         self._offset = 0.0
 
     def label(self, value):
@@ -670,7 +674,7 @@ class _ScopeLegend(Qwt.QwtLegend):
     labels at curve positions 
     """
     def __init__(self, *args):
-        apply(Qwt.QwtLegend.__init__, (self,) + args)
+        Qwt.QwtLegend.__init__(*(self,) + args)
         layout = self.contentsWidget().layout()
         layout.setSpacing(0)
     
@@ -718,7 +722,7 @@ class _OnlineCfgPane(Qt.QFrame, frmScopeOnline.Ui_frmScopeOnline):
     def __init__(self, *args):
         ''' Constructor
         '''
-        apply(Qt.QFrame.__init__, (self,) + args)
+        Qt.QFrame.__init__(*(self,) + args)
         self.setupUi(self)
 
         # set default values
@@ -744,7 +748,7 @@ class _OnlineCfgPane(Qt.QFrame, frmScopeOnline.Ui_frmScopeOnline):
                   u"1 V":1000000.0, u"2 V":2000000.0, u"5 V":5000000.0
                   }
         self.comboBoxScale.clear()
-        for text, val in sorted(scales.items(), key=itemgetter(1)):
+        for text, val in sorted(list(scales.items()), key=itemgetter(1)):
             self.comboBoxScale.addItem(text, val)    # add text and value
         
         # fill time combo box list
@@ -753,7 +757,7 @@ class _OnlineCfgPane(Qt.QFrame, frmScopeOnline.Ui_frmScopeOnline):
                   u"10 s":10.0, u"20 s":20.0, u"50 s":50.0
                   }
         self.comboBoxTime.clear()
-        for text, val in sorted(times.items(), key=itemgetter(1)):
+        for text, val in sorted(list(times.items()), key=itemgetter(1)):
             self.comboBoxTime.addItem(text, val)    # add text and value
 
         # actions
@@ -782,7 +786,7 @@ class _OnlineCfgPane(Qt.QFrame, frmScopeOnline.Ui_frmScopeOnline):
     def _isEegGroup(self):
         ''' Get info about current selected channel group
         '''
-        if not self.group_slices.has_key(ChannelGroup.EEG):
+        if ChannelGroup.EEG not in self.group_slices:
             return False
         channel_slice = self.comboBoxChannels.itemData(self.comboBoxChannels.currentIndex()).toPyObject()
         if channel_slice in self.group_slices[ChannelGroup.EEG]:
@@ -880,7 +884,7 @@ class _OnlineCfgPane(Qt.QFrame, frmScopeOnline.Ui_frmScopeOnline):
         
         # create channel groups of group_size
         slices = defaultdict(list)
-        for group, channels in self.group_indices.iteritems():
+        for group, channels in self.group_indices.items():
             for si in channels[0::self.group_size]:
                 sl = slice(si, min(si+self.group_size, channels[-1]+1), 1)
                 slices[group].append(sl)
@@ -889,7 +893,7 @@ class _OnlineCfgPane(Qt.QFrame, frmScopeOnline.Ui_frmScopeOnline):
         if self.group_slices != slices:
             self.comboBoxChannels.clear()
             self.group_slices = slices
-            for group, slice_list in slices.iteritems():
+            for group, slice_list in slices.items():
                 if group in range(len(ChannelGroup.Name)):
                     group_name = ChannelGroup.Name[group]
                 else:

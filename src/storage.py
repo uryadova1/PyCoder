@@ -31,6 +31,11 @@ along with PyCorder. If not, see <http://www.gnu.org/licenses/>.
 
 B{Revision:} $LastChangedRevision: 206 $
 '''
+from __future__ import division
+from __future__ import print_function
+from builtins import str
+from builtins import range
+from past.utils import old_div
 import ctypes as ct
 import os
 import platform
@@ -334,7 +339,7 @@ class StorageVision(ModuleBase):
                 if dlg.exec_() == True:
                     ok = True
                     files = dlg.selectedFiles()
-                    pf = unicode(files[0])
+                    pf = str(files[0])
                     # strip leading/trailing spaces from file name
                     pn, fn = os.path.split(pf)
                     self.file_name = os.path.join(pn, fn.strip())
@@ -513,7 +518,7 @@ class StorageVision(ModuleBase):
             # create EEG data file
             try:
                 self._thLock.acquire()
-                self.data_file = self.libc._wfopen(unicode(self.file_name), u"wb")
+                self.data_file = self.libc._wfopen(str(self.file_name), u"wb")
                 self.write_error = False
             except IOError as e:
                 self.header_file.close()
@@ -541,7 +546,7 @@ class StorageVision(ModuleBase):
                 self.libc.fclose(self.data_file)
                 self.marker_file.close()
             except Exception as e:
-                print "Failed to close recording files: " + str(e)
+                print("Failed to close recording files: " + str(e))
             self.data_file = 0
             self.data_file = 0
             self.online_cfg.set_recording_state(False) 
@@ -604,7 +609,7 @@ class StorageVision(ModuleBase):
                     mkr = EEG_Marker(type="New Segment", date=True, position=ns_position[ns])
                     output_markers.append(copy.deepcopy(mkr))
                     # adjust the new segment marker time
-                    sampletime = (ns_position[ns] - self.start_sample) / self.params.sample_rate
+                    sampletime = old_div((ns_position[ns] - self.start_sample), self.params.sample_rate)
                     mkr.dt = self.start_time + datetime.timedelta(seconds=sampletime)
                     # adjust position to file sample counter
                     mkr.position = ns_position[ns] - self.start_sample - self.total_missing - ns_cumulatedMissing + 1
@@ -631,7 +636,7 @@ class StorageVision(ModuleBase):
                 mkr = EEG_Marker(type="New Segment", date=True, position=ns_position[ns])
                 output_markers.append(copy.deepcopy(mkr))
                 # adjust the new segment marker time
-                sampletime = (ns_position[ns] - self.start_sample) / self.params.sample_rate
+                sampletime = old_div((ns_position[ns] - self.start_sample), self.params.sample_rate)
                 mkr.dt = self.start_time + datetime.timedelta(seconds=sampletime)
                 # adjust position to file sample counter
                 mkr.position = ns_position[ns] - self.start_sample - self.total_missing - ns_cumulatedMissing + 1
@@ -820,7 +825,7 @@ class _OnlineCfgPane(Qt.QFrame, frmStorageVisionOnline.Ui_frmStorageVisionOnline
         ''' Constructor
         @param module: parent module
         '''
-        apply(Qt.QFrame.__init__, (self,) + args)
+        Qt.QFrame.__init__(*(self,) + args)
         self.setupUi(self)
         self.module = module
 
@@ -857,7 +862,7 @@ class _OnlineCfgPane(Qt.QFrame, frmStorageVisionOnline.Ui_frmStorageVisionOnline
         ''' Display update timer event
         '''
         # calculate available disk size
-        path = unicode(self.lineEditPath.text())
+        path = str(self.lineEditPath.text())
         if len(path) > 0:
             free, total = self.module.get_free_space(path)
             if total > 0 and free > 0:
@@ -874,7 +879,7 @@ class _OnlineCfgPane(Qt.QFrame, frmStorageVisionOnline.Ui_frmStorageVisionOnline
         bps = self.module.samples_per_second * np.zeros(1,np.float32).dtype.itemsize
         if bps > 0:
             if free > 0:
-                seconds = free / bps
+                seconds = old_div(free, bps)
             else:
                 seconds = 0
             # Get the days, hours, minutes:
@@ -885,7 +890,7 @@ class _OnlineCfgPane(Qt.QFrame, frmStorageVisionOnline.Ui_frmStorageVisionOnline
             
         # calculate the time of data written to file
         if (self.module.params != None) and (self.module.params.sample_rate > 0):
-            seconds = self.module.samples_written / self.module.params.sample_rate
+            seconds = old_div(self.module.samples_written, self.module.params.sample_rate)
             self.set_filename(self.pathname, self.filename, time=seconds)
          
 
@@ -897,9 +902,9 @@ class _OnlineCfgPane(Qt.QFrame, frmStorageVisionOnline.Ui_frmStorageVisionOnline
         MINUTE  = 60
         HOUR    = MINUTE * 60
         DAY     = HOUR * 24
-        days    = int( seconds / DAY )
-        hours   = int(( seconds % DAY ) / HOUR )
-        minutes = int(( seconds % HOUR ) / MINUTE )
+        days    = int( old_div(seconds, DAY) )
+        hours   = int(old_div(( seconds % DAY ), HOUR) )
+        minutes = int(old_div(( seconds % HOUR ), MINUTE) )
         seconds = int( seconds % MINUTE )
         return days, hours, minutes, seconds
     
@@ -942,7 +947,7 @@ class _ConfigurationPane(Qt.QFrame, frmStorageVisionConfig.Ui_frmStorageVisionCo
         ''' Constructor
         @param storage: parent module
         '''
-        apply(Qt.QFrame.__init__, (self,) + args)
+        Qt.QFrame.__init__(*(self,) + args)
         self.setupUi(self)
 
         # set validators
@@ -973,8 +978,8 @@ class _ConfigurationPane(Qt.QFrame, frmStorageVisionConfig.Ui_frmStorageVisionCo
     def _contentChanged(self):
         ''' Update parent object vars
         '''
-        self.storage.default_path = unicode(self.lineEditFolder.displayText())
-        self.storage.default_prefix = unicode(self.lineEditPrefix.displayText()).lstrip()
+        self.storage.default_path = str(self.lineEditFolder.displayText())
+        self.storage.default_prefix = str(self.lineEditPrefix.displayText()).lstrip()
         self.lineEditPrefix.setText(self.storage.default_prefix)
         self.storage.default_numbersize = self.lineEditCounterSize.displayText().toInt()[0]
         self.storage.default_autoname = self.checkBoxAutoFile.isChecked()
@@ -990,7 +995,7 @@ class _ConfigurationPane(Qt.QFrame, frmStorageVisionConfig.Ui_frmStorageVisionCo
         dlg.setAcceptMode(Qt.QFileDialog.AcceptOpen)
         if dlg.exec_() == True:
             files = dlg.selectedFiles()
-            file_name = unicode(files[0])
+            file_name = str(files[0])
             self.lineEditFolder.setText(file_name)
             self._contentChanged()
         
